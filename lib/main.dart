@@ -553,7 +553,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                         decoration: BoxDecoration(
                           color: isCurrentState
                               ? Colors.blue.shade100
-                              : Colors.grey.shade50,
+                              : Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(6),
                           border: isCurrentState
                               ? Border.all(color: Colors.blue.shade300)
@@ -719,7 +719,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                   children: [
                     // Jars section
                     Expanded(
-                      flex: 2,
+                      flex: 3,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -780,7 +780,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                     SizedBox(width: 16),
                     // Game log section
                     Expanded(
-                      flex: 1,
+                      flex: 2,
                       child: _buildGameLog(),
                     ),
                   ],
