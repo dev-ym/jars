@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:collection';
 
+final String r_arrow = '\u2192';
+final String l_arrow = '\u2190';
+
 void main() {
   runApp(LiquidTransferApp());
 }
@@ -118,7 +121,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     gameHistory.clear();
     gameHistory.add(GameState(
       amounts: List.from(currentAmounts),
-      description: 'Initial state - largest jar (${maxCapacity}L) filled',
+      description: 'Largest jar (${maxCapacity}L) filled',
       timestamp: DateTime.now(),
     ));
   }
@@ -161,7 +164,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     if (pourAmount <= 0) return;
     
     // Record the pour action
-    String description = 'Pour ${pourAmount}L from Jar ${fromIndex + 1} to Jar ${toIndex + 1}';
+    String description = '${pourAmount}L from Jar ${fromIndex + 1} to Jar ${toIndex + 1}';
     
     // Animate the pour
     _pourAnimationController.forward();
@@ -223,7 +226,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
               visited.add(nextKey);
               queue.add(next);
               paths[nextKey] = List.from(paths[current.toString()]!)
-                ..add('Pour ${pourAmount}L from jar ${i + 1} to jar ${j + 1}');
+                ..add('${pourAmount}L from jar ${i + 1} to jar ${j + 1}');
             }
           }
         }
@@ -277,8 +280,8 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
   }
 
   Future<void> _executeStep(String step) async {
-    if (step.contains('Pour')) {
-      RegExp regex = RegExp(r'Pour (\d+)L from jar (\d+) to jar (\d+)');
+    if (step.contains('from jar ')) {
+      RegExp regex = RegExp(r'(\d+)L from jar (\d+) to jar (\d+)');
       Match? match = regex.firstMatch(step);
       if (match != null) {
         int amount = int.parse(match.group(1)!);
@@ -533,6 +536,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
               child: Scrollbar(
                 controller: _logScrollController,
                 thumbVisibility: true,
+                thickness: 12, // default is 8
                 child: ListView.builder(
                   controller: _logScrollController,
                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -690,30 +694,15 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                             foregroundColor: Colors.white,
                           ),
                         ),
-                        if (isSetup) ...[
-                          SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: isSolving ? null : () {
-                              setState(() {
-                                _resetToInitialState();
-                              });
-                            },
-                            child: Text('Reset'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange.shade600,
-                              foregroundColor: Colors.white,
-                            ),
+                        SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: ((!isSetup) || isSolving || currentAmounts.contains(targetQuantity)) ? null : _executeSolution,
+                          child: Text(isSolving ? 'Solving...' : 'Solve'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green.shade600,
+                            foregroundColor: Colors.white,
                           ),
-                          SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: (isSolving || currentAmounts.contains(targetQuantity)) ? null : _executeSolution,
-                            child: Text(isSolving ? 'Solving...' : 'Solve'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green.shade600,
-                              foregroundColor: Colors.white,
-                            ),
-                          ),
-                        ],
+                        ),
                       ],
                     ),
                   ],
