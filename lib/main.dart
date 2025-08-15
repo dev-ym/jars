@@ -662,54 +662,58 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    if (!isSetup) Text(
                       'Setup',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    SizedBox(height: 12),
+                    if (!isSetup) SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
-                          flex: 2,
+                          flex: 5,
                           child: TextField(
                             controller: _capacitiesController,
                             decoration: InputDecoration(
                               labelText: 'Jar Capacities',
-                              hintText: 'e.g., 3, 5, 8',
+                              hintText: 'e.g.: 10,7,3',
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             ),
                           ),
                         ),
-                        SizedBox(width: 12),
+                        SizedBox(width: isWiderThanTall ? 12 : 3),
                         Expanded(
+                          flex: 1,
                           child: TextField(
                             controller: _targetController,
                             decoration: InputDecoration(
                               labelText: 'Target',
-                              hintText: 'e.g., 4',
+                              hintText: 'e.g.: 5',
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             ),
                             keyboardType: TextInputType.number,
                           ),
                         ),
-                        SizedBox(width: 12),
+                        SizedBox(width: isWiderThanTall ? 12 : 3),
                         ElevatedButton(
                           onPressed: _parseInputAndSetup,
                           child: Text('Start'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue.shade600,
                             foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           ),
                         ),
-                        SizedBox(width: 8),
+                        SizedBox(width: isWiderThanTall ? 12 : 3),
                         ElevatedButton(
                           onPressed: ((!isSetup) || isSolving || currentAmounts.contains(targetQuantity)) ? null : _executeSolution,
+                          
                           child: Text(isSolving ? 'Solving...' : 'Solve'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green.shade600,
                             foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           ),
                         ),
                       ],
