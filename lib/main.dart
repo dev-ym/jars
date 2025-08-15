@@ -591,9 +591,9 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                                 ),
                               ),
                             ),
-                            SizedBox(width: 8),
+                            SizedBox(width: 11),
                             _buildJarsPreview(state.amounts,isWiderThanTall),
-                            SizedBox(width: 8),
+                            SizedBox(width: 11),
                             Text(
                               '[${state.amounts.join(', ')}]L',
                               style: TextStyle(
@@ -601,7 +601,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                                 color: Colors.grey.shade600,
                               ),
                             ),
-                            SizedBox(width: 8),
+                            SizedBox(width: 11),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -622,7 +622,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                             if (!isCurrentState)
                               Icon(
                                 Icons.replay,
-                                size: 16,
+                                size: 20,
                                 color: Colors.blue.shade400,
                               ),
                           ],
@@ -670,7 +670,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                     Row(
                       children: [
                         Expanded(
-                          flex: 5,
+                          flex: 4,
                           child: TextField(
                             controller: _capacitiesController,
                             decoration: InputDecoration(
@@ -683,7 +683,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                         ),
                         SizedBox(width: isWiderThanTall ? 12 : 3),
                         Expanded(
-                          flex: 1,
+                          flex: 2,
                           child: TextField(
                             controller: _targetController,
                             decoration: InputDecoration(
@@ -705,8 +705,8 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                             padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           ),
                         ),
-                        SizedBox(width: isWiderThanTall ? 12 : 3),
-                        ElevatedButton(
+                        if (isSetup) SizedBox(width: isWiderThanTall ? 12 : 3),
+                        if (isSetup) ElevatedButton(
                           onPressed: ((!isSetup) || isSolving || currentAmounts.contains(targetQuantity)) ? null : _executeSolution,
                           
                           child: Text(isSolving ? 'Solving...' : 'Solve'),

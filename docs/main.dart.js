@@ -74051,20 +74051,19 @@ o=o==null?q:o.NT(B.bh)}o=A.cn("Game Log ("+p+" steps)",q,q,q,o,q,q)
 p=r.f
 s=r.z.length
 return A.ej(q,A.alg(A.iP(A.c([new A.cM(new A.ak(12,12,12,12),o,q),A.kt(A.anG(new A.Gi(new A.a5Q(new A.abS(r,a),s,!0,!0,!0,q),new A.ak(12,8,12,8),B.aM,!1,p,q,q,!1,q,s,B.ar,q,q,B.P,B.ak,q),p,12,!0),1)],t.E),B.aV,B.at,B.aH)),B.v,q,q,q,q,q,q,q,q,q)},
-M(a){var s,r,q,p,o,n,m,l=this,k=null,j=A.bJ(a,k,t.w).w.a,i=j.a>j.b,h=A.cn("Liquid Transfer Simulator",k,k,k,k,k,k),g=t.E,f=A.c([],g)
-if(!l.y)f.push(A.cn("Setup",k,k,k,A.Y(a).ok.r,k,k))
-if(!l.y)f.push(A.cF(k,12,k))
-s=A.kt(A.ao4(l.d,A.aix(k,new A.fP(4,B.cH,B.hM),k,new A.ak(12,8,12,8),k,k,k,k,!0,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,"e.g.: 10,7,3",k,k,k,k,k,k,k,k,"Jar Capacities",!0,!0,k,k,k,k,k,k,k,k,k,k,k,k,k),k),5)
-r=A.cF(k,k,i?12:3)
-q=A.kt(A.ao4(l.e,A.aix(k,new A.fP(4,B.cH,B.hM),k,new A.ak(12,8,12,8),k,k,k,k,!0,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,k,"e.g.: 5",k,k,k,k,k,k,k,k,"Target",!0,!0,k,k,k,k,k,k,k,k,k,k,k,k,k),B.LC),1)
-p=A.cF(k,k,i?12:3)
-o=A.alU(A.cn("Start",k,k,k,k,k,k),l.ga4U(),A.alV(k,k,B.dG,k,k,k,k,k,k,B.k,k,k,new A.ak(6,4,6,4),k,k,k,k,k,k,k))
-n=A.cF(k,k,i?12:3)
-m=!l.y||l.Q||B.b.t(l.w,l.x)?k:l.gZR()
-f.push(A.nR(A.c([s,r,q,p,o,n,A.alU(A.cn(l.Q?"Solving...":"Solve",k,k,k,k,k,k),m,A.alV(k,k,B.eU,k,k,k,k,k,k,B.k,k,k,new A.ak(6,4,6,4),k,k,k,k,k,k,k))],g),B.aW,B.at,B.aH))
-f=A.c([A.alg(new A.cM(new A.ak(16,16,16,16),A.iP(f,B.aV,B.at,B.aH),k))],g)
-if(l.y){s=A.cF(k,16,k)
-B.b.T(f,A.c([s,A.kt(i?A.nR(A.c([A.kt(l.GS(a,!0),3),A.cF(k,k,16),A.kt(l.GR(!0),2)],g),B.aV,B.at,B.aH):A.iP(A.c([l.GS(a,!1),A.cF(k,k,16),A.kt(l.GR(!1),1)],g),B.aV,B.at,B.aH),1)],g))}return new A.xx(new A.tQ(h,B.dG,B.k,new A.Ny(k,k,1/0,56),k),new A.cM(new A.ak(16,16,16,16),A.iP(f,B.aV,B.at,B.aH),k),k)},
+M(a){var s,r,q,p=this,o=null,n=A.bJ(a,o,t.w).w.a,m=n.a>n.b,l=A.cn("Liquid Transfer Simulator",o,o,o,o,o,o),k=t.E,j=A.c([],k)
+if(!p.y)j.push(A.cn("Setup",o,o,o,A.Y(a).ok.r,o,o))
+if(!p.y)j.push(A.cF(o,12,o))
+s=A.kt(A.ao4(p.d,A.aix(o,new A.fP(4,B.cH,B.hM),o,new A.ak(12,8,12,8),o,o,o,o,!0,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,"e.g.: 10,7,3",o,o,o,o,o,o,o,o,"Jar Capacities",!0,!0,o,o,o,o,o,o,o,o,o,o,o,o,o),o),4)
+r=A.cF(o,o,m?12:3)
+q=A.kt(A.ao4(p.e,A.aix(o,new A.fP(4,B.cH,B.hM),o,new A.ak(12,8,12,8),o,o,o,o,!0,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,"e.g.: 5",o,o,o,o,o,o,o,o,"Target",!0,!0,o,o,o,o,o,o,o,o,o,o,o,o,o),B.LC),2)
+s=A.c([s,r,q,A.cF(o,o,m?12:3),A.alU(A.cn("Start",o,o,o,o,o,o),p.ga4U(),A.alV(o,o,B.dG,o,o,o,o,o,o,B.k,o,o,new A.ak(6,4,6,4),o,o,o,o,o,o,o))],k)
+if(p.y)s.push(A.cF(o,o,m?12:3))
+if(p.y){r=p.Q||B.b.t(p.w,p.x)?o:p.gZR()
+s.push(A.alU(A.cn(p.Q?"Solving...":"Solve",o,o,o,o,o,o),r,A.alV(o,o,B.eU,o,o,o,o,o,o,B.k,o,o,new A.ak(6,4,6,4),o,o,o,o,o,o,o)))}j.push(A.nR(s,B.aW,B.at,B.aH))
+j=A.c([A.alg(new A.cM(new A.ak(16,16,16,16),A.iP(j,B.aV,B.at,B.aH),o))],k)
+if(p.y){s=A.cF(o,16,o)
+B.b.T(j,A.c([s,A.kt(m?A.nR(A.c([A.kt(p.GS(a,!0),3),A.cF(o,o,16),A.kt(p.GR(!0),2)],k),B.aV,B.at,B.aH):A.iP(A.c([p.GS(a,!1),A.cF(o,o,16),A.kt(p.GR(!1),1)],k),B.aV,B.at,B.aH),1)],k))}return new A.xx(new A.tQ(l,B.dG,B.k,new A.Ny(o,o,1/0,56),o),new A.cM(new A.ak(16,16,16,16),A.iP(j,B.aV,B.at,B.aH),o),o)},
 GS(a,b){var s,r,q,p,o,n=this,m=null,l=n.x
 if(b){s=A.Y(a).ok.r
 s=s==null?m:s.bV(B.i3)}else{s=A.Y(a).ok.w
@@ -74165,15 +74164,15 @@ q=A.iM(6)
 p=e?A.SE(B.hT,1):i
 o=e?B.fB:B.Ae
 o=A.ej(i,A.p4(A.cn(""+b,i,i,i,A.e7(i,i,B.k,i,i,i,i,i,i,i,i,10,i,i,B.bh,i,i,!0,i,i,i,i,i,i,i,i),i,i),i,i),B.v,i,new A.cG(o,i,i,i,i,i,B.hN),i,24,i,i,i,i,24)
-n=A.cF(i,i,8)
+n=A.cF(i,i,11)
 m=f.a
 g=h.XF(m,g)
-l=A.cF(i,i,8)
+l=A.cF(i,i,11)
 m=A.cn("["+B.b.bk(m,", ")+"]L",i,i,i,A.e7(i,i,B.bW,i,i,i,i,i,i,i,i,10,i,i,i,i,i,!0,i,i,i,i,i,i,i,i),i,i)
-k=A.cF(i,i,8)
+k=A.cF(i,i,11)
 j=t.E
 j=A.c([o,n,g,l,m,k,A.kt(A.iP(A.c([A.cn(f.b,i,i,i,A.e7(i,i,i,i,i,i,i,i,i,i,i,12,i,i,e?B.bh:B.p,i,i,!0,i,i,i,i,i,i,i,i),i,i),A.cF(i,4,i)],j),B.aV,B.at,B.aH),1)],j)
-if(!e)j.push(A.aip(B.CF,B.eN,i,16))
+if(!e)j.push(A.aip(B.CF,B.eN,i,20))
 return A.amh(!1,!0,A.ej(i,A.nR(j,B.aW,B.at,B.aH),B.v,i,new A.cG(r,i,p,q,i,i,B.an),i,i,new A.ak(0,2,0,2),new A.ak(s,s,s,s),i,i,i),i,!0,i,i,i,i,i,i,new A.abR(h,b),i,i,i)},
 $S:468}
 A.abR.prototype={
