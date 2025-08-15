@@ -354,7 +354,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     );
   }
 
-  Widget _buildJarsPreview(List<int> amounts) {
+  Widget _buildJarsPreview(List<int> amounts, bool isWiderThanTall) {
     if (jarCapacities.isEmpty) return Container();
     
     // Find max capacity to determine container height
@@ -388,7 +388,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     );
   }
 
-  Widget _buildJar(int index) {
+  Widget _buildJar(int index, bool isWiderThanTall) {
     if (!isSetup || index >= jarCapacities.length) return Container();
     
     double jarHeight = _getJarHeight(jarCapacities[index]);
@@ -516,7 +516,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     );
   }
 
-  Widget _buildGameLog() {
+  Widget _buildGameLog(bool isWiderThanTall) {
     return Container(
       height: 300,
       child: Card(
@@ -527,9 +527,15 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
               padding: EdgeInsets.all(12),
               child: Text(
                 'Game Log (${gameHistory.length} steps)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: isWiderThanTall ?
+                  Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  )
+                :
+                  Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  )
+                ,
               ),
             ),
             Expanded(
@@ -599,7 +605,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                                   SizedBox(height: 4),
                                   Row(
                                     children: [
-                                      _buildJarsPreview(state.amounts),
+                                      _buildJarsPreview(state.amounts,isWiderThanTall),
                                       SizedBox(width: 8),
                                       Text(
                                         '[${state.amounts.join(', ')}]L',
@@ -635,6 +641,9 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
 
   @override
   Widget build(BuildContext context) {
+  Size screenSize = MediaQuery.of(context).size;
+  bool isWiderThanTall = screenSize.width > screenSize.height;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Liquid Transfer Simulator'),
@@ -714,82 +723,112 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
               SizedBox(height: 16),
               // Game area
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Jars section
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Target: ${targetQuantity}L',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: Colors.blue.shade700,
-                                ),
-                              ),
-                              if (currentAmounts.contains(targetQuantity))
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Text(
-                                    'TARGET REACHED!',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Drag between jars to pour liquid',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                          SizedBox(height: 16),
-                          Expanded(
-                            child: Center(
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: List.generate(
-                                    jarCapacities.length,
-                                    (index) => _buildJar(index),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                child: isWiderThanTall ?
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Jars section
+                      Expanded(
+                        flex: 3,
+                        child: _buildJarsSection(context,isWiderThanTall),
                       ),
-                    ),
-                    SizedBox(width: 16),
-                    // Game log section
-                    Expanded(
-                      flex: 2,
-                      child: _buildGameLog(),
-                    ),
-                  ],
-                ),
+                      SizedBox(width: 16),
+                      // Game log section
+                      Expanded(
+                        flex: 2,
+                        child: _buildGameLog(isWiderThanTall),
+                      ),
+                    ],
+                  )
+                  :
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Jars section
+                      Expanded(
+                        flex: 3,
+                        child: _buildJarsSection(context,isWiderThanTall),
+                      ),
+                      SizedBox(width: 16),
+                      // Game log section
+                      Expanded(
+                        flex: 2,
+                        child: _buildGameLog(isWiderThanTall),
+                      ),
+                    ],
+                  )
+                  ,
               ),
             ],
           ],
         ),
       ),
+    );
+  }
+
+  Column _buildJarsSection(BuildContext context,bool isWiderThanTall) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Target: ${targetQuantity}L',
+              style: isWiderThanTall ?
+              Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.blue.shade700,
+                )
+              :
+              Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.blue.shade700,
+                )
+              ,
+            ),
+            (currentAmounts.contains(targetQuantity)) ?
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    'TARGET REACHED!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                )
+                :
+                Text(
+                  'Drag between jars to pour liquid',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontStyle: FontStyle.italic,
+                  ),
+                )
+            ,
+          ],
+        ),
+        SizedBox(height: isWiderThanTall ? 10 : 3),
+        Expanded(
+          child: Center(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: List.generate(
+                  jarCapacities.length,
+                  (index) => _buildJar(index,isWiderThanTall),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
