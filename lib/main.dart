@@ -273,6 +273,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        duration: Duration(seconds: 1),
         content: Text('Solution completed in ${solution.length} steps!'),
         backgroundColor: Colors.green,
       ),
@@ -519,7 +520,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
 
   Widget _buildGameLog(bool isWiderThanTall) {
     return Container(
-      height: 300,
+      // height: 300,
       child: Card(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,7 +557,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                       onTap: () => _rollbackToState(index),
                       child: Container(
                         margin: EdgeInsets.symmetric(vertical: 2),
-                        padding: EdgeInsets.all(8),
+                        padding: EdgeInsets.all(isWiderThanTall ? 8 : 2),
                         decoration: BoxDecoration(
                           color: isCurrentState
                               ? Colors.blue.shade100
@@ -567,7 +568,8 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                               : null,
                         ),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          // mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Container(
                               width: 24,
@@ -590,6 +592,16 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                               ),
                             ),
                             SizedBox(width: 8),
+                            _buildJarsPreview(state.amounts,isWiderThanTall),
+                            SizedBox(width: 8),
+                            Text(
+                              '[${state.amounts.join(', ')}]L',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            SizedBox(width: 8),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,19 +616,6 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                                     ),
                                   ),
                                   SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      _buildJarsPreview(state.amounts,isWiderThanTall),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        '[${state.amounts.join(', ')}]L',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 ],
                               ),
                             ),
@@ -745,13 +744,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Jars section
-                      // Expanded(
-                      //   flex: 1,
-                      //   child: 
                         _buildJarsSection(context,isWiderThanTall),
-                      // )
-                      // ,
                       SizedBox(width: 16),
                       // Game log section
                       Expanded(
@@ -816,22 +809,16 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
           ],
         ),
         SizedBox(height: isWiderThanTall ? 10 : 3),
-        // Expanded(
-        //   child: Center(
-        //     child: 
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: List.generate(
-                  jarCapacities.length,
-                  (index) => _buildJar(index,isWiderThanTall),
-                ),
-              ),
-            // ),
-
-          // ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: List.generate(
+              jarCapacities.length,
+              (index) => _buildJar(index,isWiderThanTall),
+            ),
+          ),
         ),
       ],
     );
