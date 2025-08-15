@@ -74020,8 +74020,8 @@ for(l=t.E,p=0;p<r;p=o){o=p+1
 q[p]=A.iP(A.c([A.cn(""+o,m,m,m,new A.k(!0,B.bW,m,m,m,m,8,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m),m,m),new A.o5(m,2,m,m),n.XG(p,a[p],n.r[p])],l),B.aW,B.fz,B.e6)}return A.ej(m,A.nR(q,B.cf,B.at,B.e6),B.v,m,m,m,s*3+16,m,m,m,m,m)},
 XE(a,b){var s,r,q,p,o,n,m,l=this,k=null
 if(!l.y||a>=l.r.length)return A.ej(k,k,B.v,k,k,k,k,k,k,k,k,k)
-s=b?1:0.7
-r=b?1:0.8
+s=b?1:0.8
+r=b?1:0.9
 q=l.r[a]
 p=q*8*s
 o=l.a_B(q)*r

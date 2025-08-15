@@ -391,8 +391,8 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
 
   Widget _buildJar(int index, bool isWiderThanTall) {
     if (!isSetup || index >= jarCapacities.length) return Container();
-    double hFactor = isWiderThanTall ? 1.0 : 0.7;
-    double wFactor = isWiderThanTall ? 1.0 : 0.8;    
+    double hFactor = isWiderThanTall ? 1.0 : 0.8;
+    double wFactor = isWiderThanTall ? 1.0 : 0.9;    
     double jarHeight = _getJarHeight(jarCapacities[index]) * hFactor;
     double jarWidth = _getJarWidth(jarCapacities[index]) * wFactor;
     double fillRatio = jarCapacities[index] > 0 ? currentAmounts[index] / jarCapacities[index] : 0;
