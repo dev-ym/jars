@@ -390,9 +390,10 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
 
   Widget _buildJar(int index, bool isWiderThanTall) {
     if (!isSetup || index >= jarCapacities.length) return Container();
-    
-    double jarHeight = _getJarHeight(jarCapacities[index]);
-    double jarWidth = _getJarWidth(jarCapacities[index]);
+    double hFactor = isWiderThanTall ? 1.0 : 0.7;
+    double wFactor = isWiderThanTall ? 1.0 : 0.8;    
+    double jarHeight = _getJarHeight(jarCapacities[index]) * hFactor;
+    double jarWidth = _getJarWidth(jarCapacities[index]) * wFactor;
     double fillRatio = jarCapacities[index] > 0 ? currentAmounts[index] / jarCapacities[index] : 0;
     bool hasTarget = currentAmounts[index] == targetQuantity;
     bool isDragSource = dragSourceIndex == index;
@@ -745,14 +746,16 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Jars section
-                      Expanded(
-                        flex: 3,
-                        child: _buildJarsSection(context,isWiderThanTall),
-                      ),
+                      // Expanded(
+                      //   flex: 1,
+                      //   child: 
+                        _buildJarsSection(context,isWiderThanTall),
+                      // )
+                      // ,
                       SizedBox(width: 16),
                       // Game log section
                       Expanded(
-                        flex: 2,
+                        // flex: 3,
                         child: _buildGameLog(isWiderThanTall),
                       ),
                     ],
@@ -813,9 +816,10 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
           ],
         ),
         SizedBox(height: isWiderThanTall ? 10 : 3),
-        Expanded(
-          child: Center(
-            child: SingleChildScrollView(
+        // Expanded(
+        //   child: Center(
+        //     child: 
+            SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -825,8 +829,9 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                   (index) => _buildJar(index,isWiderThanTall),
                 ),
               ),
-            ),
-          ),
+            // ),
+
+          // ),
         ),
       ],
     );
