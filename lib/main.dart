@@ -8,6 +8,8 @@ final String l_arrow = '\u2190';
 // Memory management constants
 const int MAX_GAME_HISTORY = 500;
 
+Random random = Random();
+
 void main() {
   runApp(LiquidTransferApp());
 }
@@ -89,8 +91,36 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     super.dispose();
   }
 
+  void _createRandomSetup() {
+    bool failed = true;
+    List<int> tempCapacities = [];
+    for (int round=0; round<20; round++) {
+      int numJars = 3 + random.nextInt(2);
+      int curJar = 10 + random.nextInt(10);
+      tempCapacities.add(curJar);
+      int target = 1 + random.nextInt(curJar-2);
+      
+      String jars = '$curJar';
+      for (int i=1; i<numJars; i++) {
+        int lowerLimit = max(numJars-i, curJar ~/ 3);
+        curJar = lowerLimit + random.nextInt(curJar - 1 - lowerLimit);
+        jars = '$jars,$curJar';
+        tempCapacities.add(curJar);
+      }
+      failed = _isTargetImpossible(tempCapacities, target);
+      if (! failed) {
+        _capacitiesController.text = jars;
+        _targetController.text = '$target';
+        break;
+      }
+    }
+  }
+
   void _parseInputAndSetup() {
     try {
+      if (_capacitiesController.text.trim().isEmpty) {
+        _createRandomSetup();
+      }
       // Validate capacities input
       String capacitiesText = _capacitiesController.text.trim();
       if (capacitiesText.isEmpty) {
@@ -177,7 +207,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.red,
-        duration: Duration(seconds: 3),
+        duration: Duration(seconds: 7),
       ),
     );
   }
@@ -899,8 +929,15 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                           flex: 4,
                           child: TextField(
                             controller: _capacitiesController,
+                            onTap: () {
+                              // Select all text when tapped
+                              _capacitiesController.selection = TextSelection(
+                                baseOffset: 0,
+                                extentOffset: _capacitiesController.text.length,
+                              );
+                            },
                             decoration: InputDecoration(
-                              labelText: 'Jar Capacities',
+                              labelText: 'Jar Capacities (blank for random)',
                               hintText: 'e.g.: 10,7,3',
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -912,6 +949,13 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                           flex: 2,
                           child: TextField(
                             controller: _targetController,
+                            onTap: () {
+                              // Select all text when tapped
+                              _targetController.selection = TextSelection(
+                                baseOffset: 0,
+                                extentOffset: _targetController.text.length,
+                              );
+                            },
                             decoration: InputDecoration(
                               labelText: 'Target',
                               hintText: 'e.g.: 5',
