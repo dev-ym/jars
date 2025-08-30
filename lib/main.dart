@@ -723,14 +723,14 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
             'Jar ${index + 1}',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 11,
+              fontSize: 12,
             ),
           ),
           Text(
             '${currentAmounts[index]}/${jarCapacities[index]}L',
             style: TextStyle(
-              fontSize: 9,
-              color: Colors.grey.shade600,
+              fontSize: 12,
+              color: Colors.grey.shade900,
             ),
           ),
           SizedBox(height: 4),
@@ -870,22 +870,28 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                             SizedBox(width: 11),
                             _buildJarsPreview(state.amounts, isWiderThanTall, maxHistoryHeight: constraints.maxHeight),
                             SizedBox(width: 11),
-                            Text(
-                              '[${state.amounts.join(', ')}]L',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey.shade600,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                              Text(
+                                '[${state.amounts.join(', ')}]L',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade900,
+                                ),
                               ),
-                            ),
+                            ],),
                             SizedBox(width: 11),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
                                     state.description,
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 13,
                                       fontWeight: isCurrentState 
                                           ? FontWeight.bold 
                                           : FontWeight.normal,
