@@ -91,10 +91,10 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     super.dispose();
   }
 
-  void _createRandomSetup() {
-    bool failed = true;
-    List<int> tempCapacities = [];
+  Future<void> _createRandomSetup() async {
     for (int round=0; round<20; round++) {
+      List<int> tempCapacities = [];
+      bool failed = false;
       int numJars = 3 + random.nextInt(2);
       int curJar = 10 + random.nextInt(10);
       tempCapacities.add(curJar);
@@ -102,12 +102,24 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
       
       String jars = '$curJar';
       for (int i=1; i<numJars; i++) {
-        int lowerLimit = max(numJars-i, curJar ~/ 3);
-        curJar = lowerLimit + random.nextInt(curJar - 1 - lowerLimit);
+        int lowerLimit = max(numJars-i, curJar ~/ 2);
+        int upperLimit = max(1,curJar - 1 - lowerLimit);
+        curJar = lowerLimit + random.nextInt(upperLimit);
         jars = '$jars,$curJar';
         tempCapacities.add(curJar);
       }
-      failed = _isTargetImpossible(tempCapacities, target);
+      if (tempCapacities.contains(target)) {
+          failed = true;
+      }
+      if (! failed) {
+        failed = _isTargetImpossible(tempCapacities, target);
+      }
+      if (! failed) {
+        List<String> solution = await _solveLiquidTransfer(fast:true,capacities:tempCapacities ,target: target);
+        if (solution.isEmpty) {
+          failed = true;
+        }
+      }
       if (! failed) {
         _capacitiesController.text = jars;
         _targetController.text = '$target';
@@ -116,13 +128,14 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     }
   }
 
-  void _parseInputAndSetup() {
+  void _parseInputAndSetup() async {
     try {
-      if (_capacitiesController.text.trim().isEmpty) {
-        _createRandomSetup();
+      if (['0',''].contains( _capacitiesController.text.trim()) ) {
+        await _createRandomSetup();
       }
       // Validate capacities input
       String capacitiesText = _capacitiesController.text.trim();
+      String targetText = _targetController.text.trim();
       if (capacitiesText.isEmpty) {
         _showErrorMessage('Please enter jar capacities');
         return;
@@ -160,7 +173,6 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
       }
       
       // Validate target quantity
-      String targetText = _targetController.text.trim();
       if (targetText.isEmpty) {
         _showErrorMessage('Please enter a target quantity');
         return;
@@ -354,14 +366,24 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     }
   }
 
-  Future<List<String>> _solveLiquidTransfer() async {
-    if (jarCapacities.isEmpty) return [];
+  Future<List<String>> _solveLiquidTransfer({
+      bool fast=false,
+      List<int>? capacities=null,
+      int? target=null,}
+      ) async {
+    List<int> localCapacities = capacities ?? jarCapacities;
+    if (localCapacities.isEmpty) return [];
     
     Queue<List<int>> queue = Queue();
-    Set<String> visited = Set();
+    Set<String> visited = {};
     Map<String, List<String>> paths = {};
     
-    List<int> initial = List.from(gameHistory.first.amounts);
+    List<int> initial = List.from(capacities ?? gameHistory.first.amounts);
+    // leave only the "max" element as non-zero
+    int maxPos = initial.indexOf(initial.reduce(max));
+    initial.fillRange(0,maxPos,0);
+    initial.fillRange(maxPos+1,initial.length,0);
+
     queue.add(initial);
     visited.add(initial.toString());
     paths[initial.toString()] = [];
@@ -374,13 +396,13 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
     
     while (queue.isNotEmpty && iterations < maxIterations && visited.length < maxStates && !_cancelSolving) {
       iterations++;
-      if (iterations < maxIterations / 4) {
+      if ((! fast) && iterations < maxIterations / 4) {
         await Future.delayed(Duration(milliseconds: 5));
       }
       List<int> current = queue.removeFirst();
       
       // Check if target is reached in any jar
-      if (current.contains(targetQuantity)) {
+      if (current.contains(target ?? targetQuantity)) {
         return paths[current.toString()]!;
       }
       
@@ -398,9 +420,9 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
         
         // Pour from jar i to jar j
         for (int j = 0; j < current.length; j++) {
-          if (i != j && current[i] > 0 && current[j] < jarCapacities[j]) {
+          if (i != j && current[i] > 0 && current[j] < localCapacities[j]) {
             List<int> next = List.from(current);
-            int pourAmount = min(current[i], jarCapacities[j] - current[j]);
+            int pourAmount = min(current[i], localCapacities[j] - current[j]);
             next[i] -= pourAmount;
             next[j] += pourAmount;
             String nextKey = next.toString();
@@ -937,7 +959,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                               );
                             },
                             decoration: InputDecoration(
-                              labelText: 'Jar Capacities (blank for random)',
+                              labelText: 'Jar Capacities (0 for random)',
                               hintText: 'e.g.: 10,7,3',
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
