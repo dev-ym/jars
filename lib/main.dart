@@ -723,7 +723,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
             'Jar ${index + 1}',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 15,
             ),
           ),
           Text(
@@ -877,7 +877,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                               Text(
                                 '[${state.amounts.join(', ')}]L',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 15,
                                   color: Colors.grey.shade900,
                                 ),
                               ),
@@ -891,7 +891,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                                   Text(
                                     state.description,
                                     style: TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 15,
                                       fontWeight: isCurrentState 
                                           ? FontWeight.bold 
                                           : FontWeight.normal,
