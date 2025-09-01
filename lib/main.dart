@@ -23,7 +23,7 @@ class LiquidTransferApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: LiquidTransferHome(),
+      home: _LiquidTransferHome(),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -46,12 +46,12 @@ class GameState {
         timestamp = other.timestamp;
 }
 
-class LiquidTransferHome extends StatefulWidget {
+class _LiquidTransferHome extends StatefulWidget {
   @override
   _LiquidTransferHomeState createState() => _LiquidTransferHomeState();
 }
 
-class _LiquidTransferHomeState extends State<LiquidTransferHome>
+class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     with TickerProviderStateMixin {
   final TextEditingController _capacitiesController = TextEditingController();
   final TextEditingController _targetController = TextEditingController();
@@ -672,7 +672,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
           _pourLiquid(fromIndex, index);
         },
         onWillAccept: (fromIndex) {
-          return !isPouring && !isSolving && fromIndex != null && fromIndex != index && currentAmounts[fromIndex!] > 0;
+          return !isPouring && !isSolving && fromIndex != null && fromIndex != index && currentAmounts[fromIndex] > 0;
         },
         builder: (context, candidateData, rejectedData) {
           bool isHovered = candidateData.isNotEmpty;
@@ -796,15 +796,14 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
   Widget _buildGameLog(bool isWiderThanTall) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Container(
-          child: Card(
+        return Card(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
                   padding: EdgeInsets.all(12),
                   child: Text(
-                    'Game Log (${totalStepCount} steps)',
+                    'Game Log ($totalStepCount steps)',
                     style: isWiderThanTall ?
                       Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
@@ -870,23 +869,17 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                             SizedBox(width: 11),
                             _buildJarsPreview(state.amounts, isWiderThanTall, maxHistoryHeight: constraints.maxHeight),
                             SizedBox(width: 11),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                              Text(
-                                '[${state.amounts.join(', ')}]L',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.grey.shade900,
-                                ),
+                            Text(
+                              '[${state.amounts.join(', ')}]L',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.grey.shade900,
                               ),
-                            ],),
+                            ),
                             SizedBox(width: 11),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
                                     state.description,
@@ -917,8 +910,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
             ),
           ],
         ),
-      ),
-        );
+      );
       },
     );
   }
@@ -1009,7 +1001,6 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                               ? _cancelSolve 
                               : (currentAmounts.contains(targetQuantity) ? null : _executeSolution),
                           
-                          child: Text(isSolving ? 'Cancel solve' : 'Solve'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isSolving 
                                 ? Colors.red.shade600 
@@ -1017,6 +1008,7 @@ class _LiquidTransferHomeState extends State<LiquidTransferHome>
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           ),
+                          child: Text(isSolving ? 'Cancel solve' : 'Solve'),
                         ),
                       ],
                     ),
