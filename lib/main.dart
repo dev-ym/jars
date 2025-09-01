@@ -946,7 +946,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
                     Row(
                       children: [
                         Expanded(
-                          flex: 4,
+                          flex: 9,
                           child: TextField(
                             controller: _capacitiesController,
                             onTap: () {
@@ -957,8 +957,8 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
                               );
                             },
                             decoration: InputDecoration(
-                              labelText: 'Jar Capacities (0 for random)',
-                              hintText: 'e.g.: 10,7,3',
+                              labelText: 'Jar Capacities (0=random)',
+                              hintText: 'e.g.: 10,7,3 OR 0',
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             ),
@@ -966,7 +966,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
                         ),
                         SizedBox(width: isWiderThanTall ? 12 : 3),
                         Expanded(
-                          flex: 2,
+                          flex: 4,
                           child: TextField(
                             controller: _targetController,
                             onTap: () {
