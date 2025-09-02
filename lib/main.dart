@@ -60,7 +60,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   List<int> jarCapacities = [];
   List<int> currentAmounts = [];
   int targetQuantity = 0;
-  bool isSetup = false;
+  bool setupFinished = false;
   List<GameState> gameHistory = [];
   int totalStepCount = 0; // Persistent step counter
   bool isSolving = false;
@@ -91,8 +91,8 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     super.dispose();
   }
 
-  Future<void> _createRandomSetup() async {
-    for (int round=0; round<20; round++) {
+  Future<void> _createRandomSetup(int minSolusionSteps) async {
+    for (int round=0; round<1000; round++) {
       List<int> tempCapacities = [];
       bool failed = false;
       int numJars = 3 + random.nextInt(2);
@@ -116,7 +116,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       }
       if (! failed) {
         List<String> solution = await _solveLiquidTransfer(fast:true,capacities:tempCapacities ,target: target);
-        if (solution.isEmpty) {
+        if (solution.isEmpty || solution.length < max(minSolusionSteps,3) ) {
           failed = true;
         }
       }
@@ -130,8 +130,12 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
 
   void _parseInputAndSetup() async {
     try {
-      if (['0',''].contains( _capacitiesController.text.trim()) ) {
-        await _createRandomSetup();
+      int? minSolutionSteps = int.tryParse( _capacitiesController.text.trim());
+      if (_capacitiesController.text.trim().isEmpty) {
+        minSolutionSteps = 0;
+      }
+      if (minSolutionSteps != null) {
+        await _createRandomSetup(minSolutionSteps);
       }
       // Validate capacities input
       String capacitiesText = _capacitiesController.text.trim();
@@ -203,7 +207,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       _resetToInitialState();
       
       setState(() {
-        isSetup = true;
+        setupFinished = true;
       });
     } catch (e) {
       if (e is FormatException) {
@@ -658,7 +662,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   }
 
   Widget _buildJar(int index, bool isWiderThanTall, double maxJarHeight) {
-    if (!isSetup || index >= jarCapacities.length) return Container();
+    if (!setupFinished || index >= jarCapacities.length) return Container();
     double hFactor = isWiderThanTall ? 1.0 : 0.8;
     double wFactor = isWiderThanTall ? 1.0 : 0.9;    
     double jarHeight = _getJarHeight(jarCapacities[index], maxHeight: maxJarHeight) * hFactor;
@@ -938,11 +942,11 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (!isSetup) Text(
+                    if (!setupFinished) Text(
                       'Setup',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    if (!isSetup) SizedBox(height: 12),
+                    if (!setupFinished) SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -995,8 +999,8 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
                             padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           ),
                         ),
-                        if (isSetup) SizedBox(width: isWiderThanTall ? 12 : 3),
-                        if (isSetup) ElevatedButton(
+                        if (setupFinished) SizedBox(width: isWiderThanTall ? 12 : 3),
+                        if (setupFinished) ElevatedButton(
                           onPressed: isSolving 
                               ? _cancelSolve 
                               : (currentAmounts.contains(targetQuantity) ? null : _executeSolution),
@@ -1016,8 +1020,10 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
                 ),
               ),
             ),
-            
-            if (isSetup) ...[
+            if (! setupFinished) ...[
+              _buildDescription(),
+            ],
+            if (setupFinished) ...[
               SizedBox(height: 16),
               // Game area
               Expanded(
@@ -1059,7 +1065,24 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       ),
     );
   }
+  Widget _buildDescription() {
+    String text = """
 
+Enter jar volumes separated by commas and the target volume.
+
+To create a random challenge, leave the jar-volumes field empty and press "start".
+
+If you enter just one number in the jar-volumes field, a random challenge will be created with a solution that has at least that number of steps.
+""";
+    return Text(
+                        text,
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      );
+  }
   Widget _buildJarsSection(BuildContext context, bool isWiderThanTall) {
     return LayoutBuilder(
       builder: (context, constraints) {
