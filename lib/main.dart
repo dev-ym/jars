@@ -91,10 +91,12 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     super.dispose();
   }
 
-  Future<void> _createRandomSetup(int minSolusionSteps) async {
-    for (int round=0; round<1000; round++) {
+  Future<List<String>?> _createRandomSetup(int minSolusionSteps) async {
+    String? bestJars = null;
+    String? bestTarget = null;
+    int? bestSteps = null;
+    for (int round=0; round<3000; round++) {
       List<int> tempCapacities = [];
-      bool failed = false;
       int numJars = 3 + random.nextInt(2);
       int curJar = 10 + random.nextInt(10);
       tempCapacities.add(curJar);
@@ -109,33 +111,50 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
         tempCapacities.add(curJar);
       }
       if (tempCapacities.contains(target)) {
-          failed = true;
+          continue;
       }
-      if (! failed) {
-        failed = _isTargetImpossible(tempCapacities, target);
+      if (_isTargetImpossible(tempCapacities, target)) {
+        continue;
       }
-      if (! failed) {
-        List<String> solution = await _solveLiquidTransfer(fast:true,capacities:tempCapacities ,target: target);
-        if (solution.isEmpty || solution.length < max(minSolusionSteps,3) ) {
-          failed = true;
-        }
+      List<String> solution = await _solveLiquidTransfer(fast:true,capacities:tempCapacities ,target: target);
+      if (solution.isEmpty || solution.length < max(minSolusionSteps,3) ) {
+        continue;
       }
-      if (! failed) {
-        _capacitiesController.text = jars;
-        _targetController.text = '$target';
-        break;
+      if (solution.length == minSolusionSteps) {
+        return [jars,'$target','${solution.length}'];
+      }
+      if (bestSteps == null || solution.length < bestSteps) {
+        bestSteps = solution.length;
+        bestJars = jars;
+        bestTarget = '$target';
       }
     }
+    if (bestSteps != null) {
+      return [bestJars!,bestTarget!,'$bestSteps'];
+    }
+    return null;
   }
 
   void _parseInputAndSetup() async {
+    int minSolutionStepsLimit = 17;
     try {
       int? minSolutionSteps = int.tryParse( _capacitiesController.text.trim());
       if (_capacitiesController.text.trim().isEmpty) {
         minSolutionSteps = 0;
       }
       if (minSolutionSteps != null) {
-        await _createRandomSetup(minSolutionSteps);
+        if (minSolutionSteps > minSolutionStepsLimit) {
+          _showErrorMessage('Min solution steps should not exceed $minSolutionStepsLimit');
+          return;
+        }
+        List<String>? challenge = await _createRandomSetup(minSolutionSteps);
+        if (challenge == null) {
+          _showErrorMessage('Challenge creation failed');
+          return;
+        }
+        _capacitiesController.text = challenge[0];
+        _targetController.text = challenge[1];
+        _showInfoMessage('Challenge created with with ${challenge[2]} steps');
       }
       // Validate capacities input
       String capacitiesText = _capacitiesController.text.trim();
@@ -223,7 +242,17 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.red,
-        duration: Duration(seconds: 7),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showInfoMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.blue,
+        duration: Duration(seconds: 2),
       ),
     );
   }
