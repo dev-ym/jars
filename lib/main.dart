@@ -10,6 +10,10 @@ const int MAX_GAME_HISTORY = 500;
 
 Random random = Random();
 
+Queue<List<int>> solverQueue = Queue();
+Set<String> solverVisited = {};
+Map<String, List<String>> solverPaths = {};
+
 void main() {
   runApp(LiquidTransferApp());
 }
@@ -92,11 +96,13 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   }
 
   Future<List<String>?> _createRandomSetup(int minSolusionSteps) async {
+    int maxRounds = 10000;
     String? bestJars = null;
     String? bestTarget = null;
     int? bestSteps = null;
-    for (int round=0; round<3000; round++) {
-      List<int> tempCapacities = [];
+    List<int> tempCapacities = [];
+    for (int round=0; round<maxRounds; round++) {
+      tempCapacities.clear();
       int numJars = 3 + random.nextInt(2);
       int curJar = 10 + random.nextInt(10);
       tempCapacities.add(curJar);
@@ -139,23 +145,28 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     int minSolutionStepsLimit = 17;
     try {
       int? minSolutionSteps = int.tryParse( _capacitiesController.text.trim());
-      if (_capacitiesController.text.trim().isEmpty) {
-        minSolutionSteps = 0;
+      if (minSolutionSteps == null || minSolutionSteps < 3) {
+        minSolutionSteps = 3;
       }
-      if (minSolutionSteps != null) {
-        if (minSolutionSteps > minSolutionStepsLimit) {
-          _showErrorMessage('Min solution steps should not exceed $minSolutionStepsLimit');
-          return;
-        }
-        List<String>? challenge = await _createRandomSetup(minSolutionSteps);
-        if (challenge == null) {
-          _showErrorMessage('Challenge creation failed');
-          return;
-        }
-        _capacitiesController.text = challenge[0];
-        _targetController.text = challenge[1];
-        _showInfoMessage('Challenge created with with ${challenge[2]} steps');
+      if (minSolutionSteps > minSolutionStepsLimit) {
+        _showErrorMessage('Min solution steps should not exceed $minSolutionStepsLimit');
+        setState(() {
+          setupFinished = false;
+        });
+        return;
       }
+      _showInfoMessage( 'Creating challenge, please wait...' );
+      List<String>? challenge = await _createRandomSetup(minSolutionSteps);
+      if (challenge == null) {
+        _showErrorMessage('Challenge creation failed');
+        setState(() {
+          setupFinished = false;
+        });
+        return;
+      }
+      _capacitiesController.text = challenge[0];
+      _targetController.text = challenge[1];
+      _showInfoMessage('Challenge created with with ${challenge[2]} steps');
       // Validate capacities input
       String capacitiesText = _capacitiesController.text.trim();
       String targetText = _targetController.text.trim();
@@ -407,9 +418,9 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     List<int> localCapacities = capacities ?? jarCapacities;
     if (localCapacities.isEmpty) return [];
     
-    Queue<List<int>> queue = Queue();
-    Set<String> visited = {};
-    Map<String, List<String>> paths = {};
+    solverQueue.clear();
+    solverVisited.clear();
+    solverPaths.clear();
     
     List<int> initial = List.from(capacities ?? gameHistory.first.amounts);
     // leave only the "max" element as non-zero
@@ -417,26 +428,26 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     initial.fillRange(0,maxPos,0);
     initial.fillRange(maxPos+1,initial.length,0);
 
-    queue.add(initial);
-    visited.add(initial.toString());
-    paths[initial.toString()] = [];
+    solverQueue.add(initial);
+    solverVisited.add(initial.toString());
+    solverPaths[initial.toString()] = [];
     
     // Safety limits to prevent hanging
     const int maxIterations = 10000;
     const int maxStates = 50000;
-    const int yieldInterval = 50; // Yield to UI every 50 iterations
+    const int yieldInterval = 100; // Yield to UI every 100 iterations
     int iterations = 0;
     
-    while (queue.isNotEmpty && iterations < maxIterations && visited.length < maxStates && !_cancelSolving) {
+    while (solverQueue.isNotEmpty && iterations < maxIterations && solverVisited.length < maxStates && !_cancelSolving) {
       iterations++;
       if ((! fast) && iterations < maxIterations / 4) {
         await Future.delayed(Duration(milliseconds: 5));
       }
-      List<int> current = queue.removeFirst();
+      List<int> current = solverQueue.removeFirst();
       
       // Check if target is reached in any jar
       if (current.contains(target ?? targetQuantity)) {
-        return paths[current.toString()]!;
+        return solverPaths[current.toString()]!;
       }
       
       // Yield to UI periodically to prevent blocking
@@ -460,11 +471,12 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
             next[j] += pourAmount;
             String nextKey = next.toString();
             
-            if (!visited.contains(nextKey)) {
-              visited.add(nextKey);
-              queue.add(next);
-              paths[nextKey] = List.from(paths[current.toString()]!)
-                ..add('${pourAmount}L from jar ${i + 1} to jar ${j + 1}');
+            if (!solverVisited.contains(nextKey)) {
+              solverVisited.add(nextKey);
+              solverQueue.add(next);
+              solverPaths[nextKey] = List.from(solverPaths[current.toString()]!)
+                ..add('${pourAmount}L from jar ${i + 1} to jar ${j + 1}')
+                ;
             }
           }
         }
