@@ -103,7 +103,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       _creatingChallenge = true;
       _cancelChallengeCreation = false; 
     });
-    int maxRounds = 30000;
+    int maxRounds = 50000;
     String? bestJars = null;
     String? bestTarget = null;
     int? bestSteps = null;
@@ -117,8 +117,8 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
         return null;
       }
       tempCapacities.clear();
-      int numJars = 3 + random.nextInt(2);
-      int curJar = 10 + random.nextInt(10);
+      int numJars = minSolusionSteps > 10 ? 3 : 3 + random.nextInt(2);
+      int curJar = 10 + random.nextInt(minSolusionSteps > 10 ? 20 : 10);
       tempCapacities.add(curJar);
       int target = 1 + random.nextInt(curJar-2);
       
@@ -169,7 +169,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
 
   void _parseInputAndSetup() async {
 
-    int minSolutionStepsLimit = 18;
+    int minSolutionStepsLimit = 27;
     try {
       int? minSolutionSteps = int.tryParse( _capacitiesController.text.trim());
       bool challengeRequested = (_capacitiesController.text.isEmpty || minSolutionSteps != null);
@@ -471,6 +471,10 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     
     while (solverQueue.isNotEmpty && iterations < maxIterations && solverVisited.length < maxStates && !_cancelSolving) {
       iterations++;
+      if (iterations % 100 == 0) {
+          await Future.delayed(Duration.zero);
+      }
+
       if ((! fast) && iterations < maxIterations / 4) {
         await Future.delayed(Duration(milliseconds: 5));
       }
