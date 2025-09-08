@@ -65,6 +65,9 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   List<int> currentAmounts = [];
   int targetQuantity = 0;
   bool setupFinished = false;
+  bool _creatingChallenge = false;
+  bool _cancelChallengeCreation = false;
+
   List<GameState> gameHistory = [];
   int totalStepCount = 0; // Persistent step counter
   bool isSolving = false;
@@ -96,12 +99,23 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   }
 
   Future<List<String>?> _createRandomSetup(int minSolusionSteps) async {
-    int maxRounds = 10000;
+    setState(() {
+      _creatingChallenge = true;
+      _cancelChallengeCreation = false; 
+    });
+    int maxRounds = 30000;
     String? bestJars = null;
     String? bestTarget = null;
     int? bestSteps = null;
     List<int> tempCapacities = [];
     for (int round=0; round<maxRounds; round++) {
+      if (_cancelChallengeCreation) {
+        setState(() {
+          _creatingChallenge = false;
+          _cancelChallengeCreation = false;
+        });
+        return null;
+      }
       tempCapacities.clear();
       int numJars = 3 + random.nextInt(2);
       int curJar = 10 + random.nextInt(10);
@@ -127,6 +141,10 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
         continue;
       }
       if (solution.length == minSolusionSteps) {
+        setState(() {
+          _creatingChallenge = false;
+          _cancelChallengeCreation = false;
+        });
         return [jars,'$target','${solution.length}'];
       }
       if (bestSteps == null || solution.length < bestSteps) {
@@ -136,37 +154,50 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       }
     }
     if (bestSteps != null) {
+        setState(() {
+          _creatingChallenge = false;
+          _cancelChallengeCreation = false;
+        });
       return [bestJars!,bestTarget!,'$bestSteps'];
     }
+    setState(() {
+      _creatingChallenge = false;
+      _cancelChallengeCreation = false;
+    });
     return null;
   }
 
   void _parseInputAndSetup() async {
-    int minSolutionStepsLimit = 17;
+
+    int minSolutionStepsLimit = 18;
     try {
       int? minSolutionSteps = int.tryParse( _capacitiesController.text.trim());
-      if (minSolutionSteps == null || minSolutionSteps < 3) {
-        minSolutionSteps = 3;
+      bool challengeRequested = (_capacitiesController.text.isEmpty || minSolutionSteps != null);
+      if (challengeRequested) {
+        if (minSolutionSteps == null || minSolutionSteps < 3) {
+          minSolutionSteps = 3;
+        }
+        if (minSolutionSteps > minSolutionStepsLimit) {
+          _showErrorMessage('Min solution steps should not exceed $minSolutionStepsLimit');
+          setState(() {
+            setupFinished = false;
+          });
+          return;
+        }
+        _showInfoMessage( 'Creating challenge with $minSolutionSteps steps, please wait...' );
+        List<String>? challenge = await _createRandomSetup(minSolutionSteps);
+        if (challenge == null) {
+          _showErrorMessage('Challenge creation failed');
+          setState(() {
+            setupFinished = false;
+          });
+          return;
+        }
+        _capacitiesController.text = challenge[0];
+        _targetController.text = challenge[1];
+        _showInfoMessage('Challenge created with with ${challenge[2]} steps');
       }
-      if (minSolutionSteps > minSolutionStepsLimit) {
-        _showErrorMessage('Min solution steps should not exceed $minSolutionStepsLimit');
-        setState(() {
-          setupFinished = false;
-        });
-        return;
-      }
-      _showInfoMessage( 'Creating challenge, please wait...' );
-      List<String>? challenge = await _createRandomSetup(minSolutionSteps);
-      if (challenge == null) {
-        _showErrorMessage('Challenge creation failed');
-        setState(() {
-          setupFinished = false;
-        });
-        return;
-      }
-      _capacitiesController.text = challenge[0];
-      _targetController.text = challenge[1];
-      _showInfoMessage('Challenge created with with ${challenge[2]} steps');
+
       // Validate capacities input
       String capacitiesText = _capacitiesController.text.trim();
       String targetText = _targetController.text.trim();
@@ -485,8 +516,13 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     
     return []; // No solution found or limits exceeded
   }
+  Future<void> _cancelChallenge() async {
+    setState(() {
+      _cancelChallengeCreation = true;
+    });
+  }
 
-  Future<void> _executeSolution() async {
+  Future<void> _computeSolution() async {
     setState(() {
       isSolving = true;
       _cancelSolving = false;
@@ -519,6 +555,14 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     for (String step in solution) {
       await _executeStep(step);
       await Future.delayed(Duration(milliseconds: 800));
+      if (_cancelSolving) {
+        _resetToInitialState();
+        setState(() {
+          _cancelSolving = false;
+          isSolving = false;
+        });
+        return;
+      }
     }
     
     setState(() {
@@ -1040,20 +1084,28 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
                             padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           ),
                         ),
-                        if (setupFinished) SizedBox(width: isWiderThanTall ? 12 : 3),
-                        if (setupFinished) ElevatedButton(
+                        SizedBox(width: isWiderThanTall ? 12 : 3),
+                        ElevatedButton(
                           onPressed: isSolving 
                               ? _cancelSolve 
-                              : (currentAmounts.contains(targetQuantity) ? null : _executeSolution),
+                              : _creatingChallenge ? _cancelChallenge
+                              : currentAmounts.contains(targetQuantity) ? null
+                              : _capacitiesController.text.isEmpty ? null
+                               : _computeSolution
+                              
+                               ,
                           
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isSolving 
+                            backgroundColor: (isSolving || _creatingChallenge) 
                                 ? Colors.red.shade600 
-                                : Colors.green.shade600,
+                                : setupFinished ?
+                                 Colors.green.shade600 : Colors.grey.shade400,
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           ),
-                          child: Text(isSolving ? 'Cancel solve' : 'Solve'),
+                          child: Text(isSolving ? 'Cancel solve' : 
+                            _creatingChallenge ? 'Cancel' :
+                          'Solve'),
                         ),
                       ],
                     ),
