@@ -89,16 +89,27 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
 
   @override
   void dispose() {
+    // ensure any background solvers/creators stop if widget is gone
+    _cancelSolving = true;
+    _cancelChallengeCreation = true;
+
     _pourAnimationController.dispose();
     _logScrollController.dispose();
     super.dispose();
   }
 
+  // helper to avoid calling setState after dispose
+  void safeSetState(VoidCallback fn) {
+    if (!mounted) return;
+    setState(fn);
+  }
+
   Future<List<String>?> _createRandomSetup(int minSolusionSteps) async {
-    setState(() {
+    safeSetState(() {
       _creatingChallenge = true;
-      _cancelChallengeCreation = false; 
+      _cancelChallengeCreation = false;
     });
+
     int maxRounds = 50000;
     String? bestJars = null;
     String? bestTarget = null;
@@ -106,7 +117,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     List<int> tempCapacities = [];
     for (int round=0; round<maxRounds; round++) {
       if (_cancelChallengeCreation) {
-        setState(() {
+        safeSetState(() {
           _creatingChallenge = false;
           _cancelChallengeCreation = false;
         });
@@ -137,7 +148,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
         continue;
       }
       if (solution.length == minSolusionSteps) {
-        setState(() {
+        safeSetState(() {
           _creatingChallenge = false;
           _cancelChallengeCreation = false;
         });
@@ -150,13 +161,13 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       }
     }
     if (bestSteps != null) {
-        setState(() {
+        safeSetState(() {
           _creatingChallenge = false;
           _cancelChallengeCreation = false;
         });
       return [bestJars!,bestTarget!,'$bestSteps'];
     }
-    setState(() {
+    safeSetState(() {
       _creatingChallenge = false;
       _cancelChallengeCreation = false;
     });
@@ -332,20 +343,24 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   }
 
   void _addToHistory(String description) {
-    totalStepCount++; // Increment persistent counter
-    gameHistory.add(GameState(
-      amounts: List.from(currentAmounts),
-      description: description,
-      timestamp: DateTime.now(),
-    ));
-    
-    // Limit history size to prevent memory leaks
-    if (gameHistory.length > MAX_GAME_HISTORY) {
-      gameHistory.removeRange(0, gameHistory.length - MAX_GAME_HISTORY);
-    }
-    
-    // Auto-scroll to the latest entry
+    // Guard modifications so they don't run after dispose.
+    if (!mounted) return;
+    safeSetState(() {
+      totalStepCount++; // Increment persistent counter
+      gameHistory.add(GameState(
+        amounts: List.from(currentAmounts),
+        description: description,
+        timestamp: DateTime.now(),
+      ));
+      // Limit history size to prevent memory leaks
+      if (gameHistory.length > MAX_GAME_HISTORY) {
+        gameHistory.removeRange(0, gameHistory.length - MAX_GAME_HISTORY);
+      }
+    });
+
+    // Auto-scroll to the latest entry (post-frame)
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       if (_logScrollController.hasClients) {
         _logScrollController.animateTo(
           _logScrollController.position.maxScrollExtent,
@@ -378,7 +393,8 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   }
 
   void _cancelSolve() {
-    setState(() {
+    // don't call setState if disposed
+    safeSetState(() {
       _cancelSolving = true;
       isSolving = false;
     });
@@ -389,7 +405,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     if (isPouring || isSolving || fromIndex == toIndex || currentAmounts[fromIndex] == 0) return;
     
     // Set pouring flag to prevent race conditions
-    setState(() {
+    safeSetState(() {
       isPouring = true;
     });
     
@@ -398,7 +414,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       int pourAmount = min(currentAmounts[fromIndex], availableSpace);
       
       if (pourAmount <= 0) {
-        setState(() {
+        safeSetState(() {
           isPouring = false;
         });
         return;
@@ -410,10 +426,12 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       // Animate the pour
       await _pourAnimationController.forward();
       
-      setState(() {
-        currentAmounts[fromIndex] -= pourAmount;
-        currentAmounts[toIndex] += pourAmount;
-      });
+      if (mounted) {
+        safeSetState(() {
+          currentAmounts[fromIndex] -= pourAmount;
+          currentAmounts[toIndex] += pourAmount;
+        });
+      }
       
       _addToHistory(description);
       
@@ -422,16 +440,18 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       
       // Check if target is reached
       if (currentAmounts.contains(targetQuantity)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Target quantity ${targetQuantity}L reached!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Target quantity ${targetQuantity}L reached!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
     } finally {
       // Always reset the pouring flag
-      setState(() {
+      safeSetState(() {
         isPouring = false;
       });
     }
@@ -512,24 +532,27 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   }
 
   Future<void> _computeSolution() async {
-    setState(() {
+    safeSetState(() {
       isSolving = true;
       _cancelSolving = false;
     });
     
     List<String> solution = await _solveLiquidTransfer();
     
+    if (!mounted) return;
+
     if (solution.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text( _cancelSolving ?
-            'Solving cancelled' :
-            'No solution found - either impossible or too complex'
-            ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      setState(() {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_cancelSolving
+                ? 'Solving cancelled'
+                : 'No solution found - either impossible or too complex'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      safeSetState(() {
         isSolving = false;
       });
       return;
@@ -537,16 +560,17 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     
     // Reset to initial state
     _resetToInitialState();
-    setState(() {});
+    if (mounted) safeSetState(() {});
     await Future.delayed(Duration(milliseconds: 500));
     
     // Execute each step of the solution
     for (String step in solution) {
+      if (_cancelSolving || !mounted) break;
       await _executeStep(step);
       await Future.delayed(Duration(milliseconds: 800));
       if (_cancelSolving) {
         _resetToInitialState();
-        setState(() {
+        safeSetState(() {
           _cancelSolving = false;
           isSolving = false;
         });
@@ -554,17 +578,20 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       }
     }
     
-    setState(() {
+    if (!mounted) return;
+    safeSetState(() {
       isSolving = false;
     });
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        duration: Duration(seconds: 1),
-        content: Text('Solution completed in ${solution.length} steps!'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 1),
+          content: Text('Solution completed in ${solution.length} steps!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   Future<void> _executeStep(String step) async {
@@ -640,7 +667,12 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   }
 
   Widget _buildMiniJar(int jarIndex, int amount, int capacity, {double pixelsPerUnit = 3.0, double? maxHeight}) {
-    if (jarCapacities.isEmpty) return Container();
+    if (jarCapacities.isEmpty || jarIndex < 0 || jarIndex >= jarCapacities.length) return Container();
+    
+    // Ensure amount is in valid range for this capacity
+    int safeAmount = amount;
+    if (safeAmount < 0) safeAmount = 0;
+    if (safeAmount > capacity) safeAmount = capacity;
     
     // Height directly proportional to capacity
     double jarHeight = capacity * pixelsPerUnit;
@@ -650,16 +682,14 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
       int maxCapacity = jarCapacities.reduce(max);
       double maxCalculatedHeight = maxCapacity * pixelsPerUnit;
       if (maxCalculatedHeight > maxHeight) {
-        // Scale down proportionally
         double scaleFactor = maxHeight / maxCalculatedHeight;
         jarHeight = capacity * pixelsPerUnit * scaleFactor;
       }
     }
     
     double jarWidth = 12.0; // Fixed width for mini jars
-    
-    double fillRatio = capacity > 0 ? amount / capacity : 0;
-    bool hasTarget = amount == targetQuantity;
+    double fillRatio = capacity > 0 ? safeAmount / capacity : 0;
+    bool hasTarget = safeAmount == targetQuantity;
     
     return Container(
       width: jarWidth,
@@ -697,6 +727,12 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   Widget _buildJarsPreview(List<int> amounts, bool isWiderThanTall, {double? maxHistoryHeight}) {
     if (jarCapacities.isEmpty) return Container();
     
+    // Normalize amounts to current jarCapacities length (pad with zeros or truncate)
+    List<int> effectiveAmounts = List<int>.generate(
+      jarCapacities.length,
+      (i) => i < amounts.length ? amounts[i] : 0,
+    );
+    
     // Calculate max height for mini jars (1/4 of history area height)
     double maxMiniJarHeight = maxHistoryHeight != null ? maxHistoryHeight * 0.25 : double.infinity;
     double extraSpace = 16; // Space for jar numbers and spacing
@@ -727,7 +763,7 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
                 ),
               ),
               SizedBox(height: 2),
-              _buildMiniJar(index, amounts[index], jarCapacities[index], maxHeight: maxMiniJarHeight),
+              _buildMiniJar(index, effectiveAmounts[index], jarCapacities[index], maxHeight: maxMiniJarHeight),
             ],
           ),
         ),
