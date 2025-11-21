@@ -10,10 +10,6 @@ const int MAX_GAME_HISTORY = 500;
 
 Random random = Random();
 
-Queue<List<int>> solverQueue = Queue();
-Set<String> solverVisited = {};
-Map<String, List<String>> solverPaths = {};
-
 void main() {
   runApp(LiquidTransferApp());
 }
@@ -442,83 +438,72 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
   }
 
   Future<List<String>> _solveLiquidTransfer({
-      bool fast=false,
-      List<int>? capacities=null,
-      int? target=null,}
-      ) async {
-    List<int> localCapacities = capacities ?? jarCapacities;
+      bool fast = false,
+      List<int>? capacities = null,
+      int? target = null,
+    }) async {
+    final List<int> localCapacities = capacities ?? jarCapacities;
+    final int localTarget = target ?? targetQuantity;
     if (localCapacities.isEmpty) return [];
-    
-    solverQueue.clear();
-    solverVisited.clear();
-    solverPaths.clear();
-    
-    List<int> initial = List.from(capacities ?? gameHistory.first.amounts);
-    // leave only the "max" element as non-zero
-    int maxPos = initial.indexOf(initial.reduce(max));
-    initial.fillRange(0,maxPos,0);
-    initial.fillRange(maxPos+1,initial.length,0);
 
-    solverQueue.add(initial);
-    solverVisited.add(initial.toString());
-    solverPaths[initial.toString()] = [];
-    
-    // Safety limits to prevent hanging
+    // Make solver-local collections to avoid cross-call interference
+    final Queue<List<int>> q = Queue<List<int>>();
+    final Set<String> visited = <String>{};
+    final Map<String, List<String>> paths = <String, List<String>>{};
+
+    // Build initial amounts: all zero except largest jar full
+    List<int> initialAmounts = List<int>.filled(localCapacities.length, 0);
+    int maxCap = localCapacities.reduce(max);
+    int maxIndex = localCapacities.indexOf(maxCap);
+    initialAmounts[maxIndex] = maxCap;
+
+    String startKey = initialAmounts.toString();
+    q.add(initialAmounts);
+    visited.add(startKey);
+    paths[startKey] = <String>[];
+
+    // Safety limits
     const int maxIterations = 10000;
     const int maxStates = 50000;
-    const int yieldInterval = 100; // Yield to UI every 100 iterations
+    const int yieldInterval = 100;
     int iterations = 0;
-    
-    while (solverQueue.isNotEmpty && iterations < maxIterations && solverVisited.length < maxStates && !_cancelSolving) {
-      iterations++;
-      if (iterations % 100 == 0) {
-          await Future.delayed(Duration.zero);
-      }
 
-      if ((! fast) && iterations < maxIterations / 4) {
-        await Future.delayed(Duration(milliseconds: 5));
-      }
-      List<int> current = solverQueue.removeFirst();
-      
-      // Check if target is reached in any jar
-      if (current.contains(target ?? targetQuantity)) {
-        return solverPaths[current.toString()]!;
-      }
-      
-      // Yield to UI periodically to prevent blocking
+    while (q.isNotEmpty && iterations < maxIterations && visited.length < maxStates && !_cancelSolving) {
+      iterations++;
       if (iterations % yieldInterval == 0) {
         await Future.delayed(Duration.zero);
-        // Check for cancellation after yielding
-        if (_cancelSolving) {
-          return [];
-        }
+        if (_cancelSolving) return [];
       }
-      
-      // Generate all possible next states
-      for (int i = 0; i < current.length; i++) {
-        
-        // Pour from jar i to jar j
-        for (int j = 0; j < current.length; j++) {
-          if (i != j && current[i] > 0 && current[j] < localCapacities[j]) {
-            List<int> next = List.from(current);
-            int pourAmount = min(current[i], localCapacities[j] - current[j]);
-            next[i] -= pourAmount;
-            next[j] += pourAmount;
-            String nextKey = next.toString();
-            
-            if (!solverVisited.contains(nextKey)) {
-              solverVisited.add(nextKey);
-              solverQueue.add(next);
-              solverPaths[nextKey] = List.from(solverPaths[current.toString()]!)
-                ..add('${pourAmount}L from jar ${i + 1} to jar ${j + 1}')
-                ;
-            }
-          }
+      if ((!fast) && iterations < maxIterations / 4) {
+        await Future.delayed(Duration(milliseconds: 5));
+      }
+
+      final List<int> cur = q.removeFirst();
+
+      if (cur.contains(localTarget)) {
+        return paths[cur.toString()] ?? [];
+      }
+
+      for (int i = 0; i < cur.length; i++) {
+        if (cur[i] == 0) continue;
+        for (int j = 0; j < cur.length; j++) {
+          if (i == j) continue;
+          if (cur[j] >= localCapacities[j]) continue;
+
+          List<int> next = List<int>.from(cur);
+          int pour = min(cur[i], localCapacities[j] - cur[j]);
+          next[i] -= pour;
+          next[j] += pour;
+          String key = next.toString();
+          if (visited.contains(key)) continue;
+          visited.add(key);
+          q.add(next);
+          paths[key] = List<String>.from(paths[cur.toString()] ?? [])..add('${pour}L from jar ${i + 1} to jar ${j + 1}');
         }
       }
     }
-    
-    return []; // No solution found or limits exceeded
+
+    return []; // not found / cancelled / limits hit
   }
   Future<void> _cancelChallenge() async {
     setState(() {
@@ -890,120 +875,109 @@ class _LiquidTransferHomeState extends State<_LiquidTransferHome>
     return LayoutBuilder(
       builder: (context, constraints) {
         return Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Text(
-                    'Game Log ($totalStepCount steps)',
-                    style: isWiderThanTall ?
-                      Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      )
-                    :
-                      Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      )
-                    ,
-                  ),
-                ),
-                Expanded(
-                  child: Scrollbar(
-                    controller: _logScrollController,
-                    thumbVisibility: true,
-                    thickness: 12, // default is 8
-                    child: ListView.builder(
-                      controller: _logScrollController,
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      itemCount: gameHistory.length,
-                      itemBuilder: (context, index) {
-                        GameState state = gameHistory[index];
-                    bool isCurrentState = index == gameHistory.length - 1;
-                    
-                    return InkWell(
-                      onTap: () => _rollbackToState(index),
-                      child: Container(
-                        margin: EdgeInsets.symmetric(vertical: 2),
-                        padding: EdgeInsets.all(isWiderThanTall ? 8 : 2),
-                        decoration: BoxDecoration(
-                          color: isCurrentState
-                              ? Colors.blue.shade100
-                              : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(6),
-                          border: isCurrentState
-                              ? Border.all(color: Colors.blue.shade300)
-                              : null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(12),
+                child: Text(
+                  'Game Log ($totalStepCount steps)',
+                  style: isWiderThanTall
+                      ? Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        )
+                      : Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          // mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isCurrentState
-                                    ? Colors.blue
-                                    : Colors.grey.shade400,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '${totalStepCount - gameHistory.length + 1 + index}',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+                ),
+              ),
+              Expanded(
+                child: Scrollbar(
+                  controller: _logScrollController,
+                  thumbVisibility: true,
+                  thickness: 12,
+                  child: ListView.builder(
+                    controller: _logScrollController,
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    itemCount: gameHistory.length,
+                    itemBuilder: (context, index) {
+                      GameState state = gameHistory[index];
+                      bool isCurrentState = index == gameHistory.length - 1;
+
+                      return InkWell(
+                        onTap: () => _rollbackToState(index),
+                        child: Container(
+                          margin: EdgeInsets.symmetric(vertical: 2),
+                          padding: EdgeInsets.all(isWiderThanTall ? 8 : 2),
+                          decoration: BoxDecoration(
+                            color: isCurrentState ? Colors.blue.shade100 : Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(6),
+                            border: isCurrentState ? Border.all(color: Colors.blue.shade300) : null,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isCurrentState ? Colors.blue : Colors.grey.shade400,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${totalStepCount - gameHistory.length + 1 + index}',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            SizedBox(width: 11),
-                            _buildJarsPreview(state.amounts, isWiderThanTall, maxHistoryHeight: constraints.maxHeight),
-                            SizedBox(width: 11),
-                            Text(
-                              '[${state.amounts.join(', ')}]L',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.grey.shade900,
+                              SizedBox(width: 11),
+                              _buildJarsPreview(state.amounts, isWiderThanTall, maxHistoryHeight: constraints.maxHeight),
+                              SizedBox(width: 11),
+                              Text(
+                                '[${state.amounts.join(', ')}]L',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.grey.shade900,
+                                ),
                               ),
-                            ),
-                            SizedBox(width: 11),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    state.description,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: isCurrentState 
-                                          ? FontWeight.bold 
-                                          : FontWeight.normal,
+                              SizedBox(width: 11),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      state.description,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: isCurrentState ? FontWeight.bold : FontWeight.normal,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 4),
-                                ],
+                                    SizedBox(height: 4),
+                                  ],
+                                ),
                               ),
-                            ),
-                            if (!isCurrentState)
-                              Icon(
-                                Icons.replay,
-                                size: 20,
-                                color: Colors.blue.shade400,
-                              ),
-                          ],
+                              if (!isCurrentState)
+                                Icon(
+                                  Icons.replay,
+                                  size: 20,
+                                  color: Colors.blue.shade400,
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      );
+            ],
+          ),
+        );
       },
     );
   }
