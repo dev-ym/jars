@@ -34,6 +34,13 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        window.location.reload();
+      });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
